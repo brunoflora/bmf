@@ -1,15 +1,26 @@
-.container {
-	margin: 0px auto;
-	background-color: #f8f8f8;
+header {
+	min-height: 200px;
 }
 
-.pantone2013 {
-	background-color: #009b77;
+.img-skull {
+	width: 140px;
+	height: 140px;
+	position: absolute;
+	top: 5%;
+	left: 49%;
+	margin-left: -50px;
+	border-radius: 75px;
+	border: 1px dotted;
 }
 
-.footer {
-	margin: 0px auto;
-	padding: 5px;
-	background-color: #eeeeee;
-	border-top: 1px solid #666;
+.pantone13 {
+	color: #009b77;
+}
+
+.text-title {
+	font-size: 38.5px;
+}
+
+.text-description {
+	font-size: 17.5px;
 }
