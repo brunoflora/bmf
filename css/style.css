@@ -1,3 +1,12 @@
+.card {
+	max-width: 640px;
+	min-width: 320px;
+	background-color: #f8f8f8;
+	border:1px dotted #666;
+	border-radius: 5px;
+	margin: 20px auto;
+}
+
 header {
 	min-height: 200px;
 }
@@ -10,6 +19,7 @@ header {
 	left: 49%;
 	margin-left: -50px;
 	border-radius: 75px;
+	background-color: #f8f8f8;
 	border: 1px dotted;
 }
 
