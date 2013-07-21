@@ -2,8 +2,6 @@
 	max-width: 640px;
 	min-width: 320px;
 	background-color: #f8f8f8;
-	border:1px dotted #666;
-	border-radius: 5px;
 	margin: 20px auto;
 }
 
@@ -11,16 +9,22 @@ header {
 	min-height: 200px;
 }
 
-.img-skull {
-	width: 140px;
-	height: 140px;
+#cf_image {
+	margin:0 auto;
+	width:140px;
+	height:140px;
+	transition: background-image 1s ease-in-out;
+	background-image:url("../img/skull.png");
 	position: absolute;
 	top: 5%;
 	left: 49%;
 	margin-left: -50px;
 	border-radius: 75px;
 	background-color: #f8f8f8;
-	border: 1px dotted;
+}
+
+#cf_image:hover {
+  background-image:url("../img/skullbmf.png");
 }
 
 .pantone13 {
@@ -33,4 +37,20 @@ header {
 
 .text-description {
 	font-size: 17.5px;
+}
+
+.progress-content {
+	padding: 20px 120px;
+}
+
+footer {
+	overflow: hidden;
+}
+
+.social {
+	padding-top: 20px;
+}
+
+.social-primary {
+	padding-bottom: 20px;
 }
