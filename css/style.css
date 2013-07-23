@@ -7,6 +7,7 @@
 
 header {
 	min-height: 200px;
+	padding: 5%;
 }
 
 #cf_image {
@@ -15,10 +16,6 @@ header {
 	height:140px;
 	transition: background-image 1s ease-in-out;
 	background-image:url("../img/skull.png");
-	position: absolute;
-	top: 5%;
-	left: 49%;
-	margin-left: -50px;
 	border-radius: 75px;
 	background-color: #f8f8f8;
 }
@@ -53,4 +50,63 @@ footer {
 
 .social-primary {
 	padding-bottom: 20px;
+}
+
+.github {
+	width: 64px;
+	height: 64px;
+	background-image:url("../img/social-media.png");
+	background-position:64px -0px;
+}
+
+.github:hover {
+	background-position:0px -0px;
+}
+
+.linkedin {
+	width: 64px;
+	height: 64px;
+	background-image:url("../img/social-media.png");
+	background-position:64px -64px;
+}
+
+.linkedin:hover {
+	background-position:0px -64px;
+}
+
+.twitter {
+	width: 64px;
+	height: 64px;
+	background-image:url("../img/social-media.png");
+	background-position:64px -128px;
+}
+
+.twitter:hover {
+	background-position:0px -128px;
+}
+
+.google {
+	width: 64px;
+	height: 64px;
+	background-image:url("../img/social-media.png");
+	background-position:64px -192px;
+}
+
+.google:hover {
+	background-position:0px -192px;
+}
+
+.facebook {
+	width: 64px;
+	height: 64px;
+	background-image:url("../img/social-media.png");
+	background-position:64px -256px;
+}
+
+.facebook:hover {
+	background-position:0px -256px;
+}
+
+.btn-contact {
+	width: 100px !important;
 }
