@@ -1,13 +1,12 @@
-.card {
-	max-width: 640px;
-	min-width: 320px;
-	background-color: #f8f8f8;
-	margin: 20px auto;
-}
-
-header {
-	min-height: 200px;
-	padding: 5%;
+body {
+	position: relative;
+	padding-top: 40px;
+	margin: 0;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	line-height: 20px;
+	color: #333333;
+	background-color: #ffffff;
 }
 
 #cf_image {
@@ -40,9 +39,6 @@ header {
 	padding: 20px 120px;
 }
 
-footer {
-	overflow: hidden;
-}
 
 .social {
 	padding-top: 20px;
