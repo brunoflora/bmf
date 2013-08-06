@@ -1,12 +1,6 @@
 body {
-	position: relative;
-	padding-top: 40px;
-	margin: 0;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-	font-size: 14px;
-	line-height: 20px;
-	color: #333333;
-	background-color: #ffffff;
+	overflow: hidden;
+	padding: 2% !important;
 }
 
 #cf_image {
@@ -105,4 +99,18 @@ body {
 
 .btn-contact {
 	width: 100px !important;
+}
+
+.footer {
+	background-color: #edeff1;
+	color: #bac1c8;
+	font-size: 15px;
+	padding: 0;
+	overflow: hidden;
+	position: fixed;
+	left: 0;
+	bottom: 0px;
+	right: 0;
+	width: 100%;
+}
 }
