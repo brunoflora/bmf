@@ -29,8 +29,12 @@ body {
 	font-size: 17.5px;
 }
 
+.text-contact {
+	font-size: 7.5px;
+}
+
 .progress-content {
-	padding: 20px 120px;
+	padding: 20px;
 }
 
 
@@ -113,4 +117,7 @@ body {
 	right: 0;
 	width: 100%;
 }
+.itemscope {
+	overflow: hidden;
+	padding-bottom: 1%;
 }
