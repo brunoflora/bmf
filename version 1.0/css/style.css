@@ -1,68 +1,51 @@
-/* GENERAL */
 body {
-	margin: 1%;
+	overflow: hidden;
+	padding: 2% !important;
 }
 
-.pantone {
-	color: #626ca1;
-	margin-bottom: 1%;
-	border-bottom: 1px solid #626ca1;
+#cf_image {
+	margin:0 auto;
+	width:140px;
+	height:140px;
+	transition: background-image 1s ease-in-out;
+	background-image:url("../img/skull.png");
+	border-radius: 75px;
+	background-color: #f8f8f8;
 }
 
-.pantona {
-	color: #626ca1;
+#cf_image:hover {
+  background-image:url("../img/skullbmf.png");
 }
 
-.sr-only {
-	font-size: 14px;
-	letter-spacing: 4px;
+.pantone13 {
+	color: #009b77;
 }
 
-/* MAIN */
-.skull {
-	width: 130px;
-	height: 130px;
-	margin: 5% auto;
-	border-radius: 65px;
-	background-image: url("../img/skull.png");
-	background-position: 0px -130px;
-	background-repeat: no-repeat;
-	-webkit-transition: background 300ms ease-in 100ms;
-    -moz-transition: background 300ms ease-in 100ms;
-    -o-transition: background 300ms ease-in 100ms;
-    transition: background 300ms ease-in 100ms;
+.text-title {
+	font-size: 38.5px;
 }
 
-.skull:hover {
-	background-position: 0px 0px;
+.text-description {
+	font-size: 17.5px;
 }
 
-/* CENTERED-CONTAINER */
-.centered-container {
-	margin: 5% 0%;
+.text-contact {
+	font-size: 7.5px;
 }
 
-.barter1 {
-	width: 100%;
-	height: 200px;
+.progress-content {
+	padding: 10%;
 }
 
-.barter2 {
-	width: 100%;
-	height: 200px;
+
+.social {
+	padding-top: 20px;
 }
 
-.barter3 {
-	width: 100%;
-	height: 200px;
+.social-primary {
+	padding-bottom: 20px;
 }
 
-.slaves {
-	font-size: 14px;
-	opacity: .7;
-}
-
-/* FOOTER */
 .github {
 	width: 64px;
 	height: 64px;
@@ -116,4 +99,25 @@ body {
 
 .facebook:hover {
 	background-position:0px -256px;
+}
+
+.btn-contact {
+	width: 100px !important;
+}
+
+.footer {
+	background-color: #edeff1;
+	color: #bac1c8;
+	font-size: 15px;
+	padding: 0;
+	overflow: hidden;
+	position: fixed;
+	left: 0;
+	bottom: 0px;
+	right: 0;
+	width: 100%;
+}
+.itemscope {
+	overflow: hidden;
+	padding-bottom: 1%;
 }
