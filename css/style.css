@@ -3,6 +3,10 @@ body {
 	margin: 1%;
 }
 
+.canvas {
+	padding: 0;
+}
+
 .pantone {
 	color: #626ca1;
 	margin-bottom: 1%;
