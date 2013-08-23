@@ -78,53 +78,53 @@ body {
 	min-width: 64px;
 	min-height: 64px;
 	background-image:url("../img/social-media.png");
-	background-position:64px -0px;
+	background-position:0px 0px;
 }
 
 .github:hover {
-	background-position:0px -0px;
+	background-position:64px 0px;
 }
 
 .linkedin {
 	width: 64px;
 	height: 64px;
 	background-image:url("../img/social-media.png");
-	background-position:64px -64px;
+	background-position:0px -64px;
 }
 
 .linkedin:hover {
-	background-position:0px -64px;
+	background-position:64px -64px;
 }
 
 .twitter {
 	width: 64px;
 	height: 64px;
 	background-image:url("../img/social-media.png");
-	background-position:64px -128px;
+	background-position:0px -128px;
 }
 
 .twitter:hover {
-	background-position:0px -128px;
+	background-position:64px -128px;
 }
 
 .google {
 	width: 64px;
 	height: 64px;
 	background-image:url("../img/social-media.png");
-	background-position:64px -192px;
+	background-position:0px -192px;
 }
 
 .google:hover {
-	background-position:0px -192px;
+	background-position:64px -192px;
 }
 
 .facebook {
 	width: 64px;
 	height: 64px;
 	background-image:url("../img/social-media.png");
-	background-position:64px -256px;
+	background-position:0px -256px;
 }
 
 .facebook:hover {
-	background-position:0px -256px;
+	background-position:64px -256px;
 }
