@@ -71,11 +71,38 @@
 					<h1 class="pantone">Bruno Flora</h1>
 				</p>
 				<p>
-					<h2 class="pantona">...interaction designer and front-end in development...</h2>
+					<h2 class="pantona">...front-end and interaction designer in development...</h2>
 				</p>
 				<div class="progress progress-striped active">
-					<div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" style="width: 45%">
-						<span class="sr-only"><strong>SKILLS: 35% COMPLET</strong></span>
+					<div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="35" aria-valuemin="0" aria-valuemax="100" style="float: left; width: 0%; " data-percentage="35">
+						<!-- <span class="sr-only"><strong>SKILLS: 35% COMPLETE</strong></span> -->
+						<script>
+						setTimeout(function(){
+
+					        $('.progress .progress-bar').each(function() {
+					            var me = $(this);
+					            var perc = me.attr("data-percentage");
+
+					            //TODO: left and right text handling
+
+					            var current_perc = 0;
+
+					            var progress = setInterval(function() {
+					                if (current_perc>=perc) {
+					                    clearInterval(progress);
+					                } else {
+					                    current_perc +=1;
+					                    me.css('width', (current_perc)+'%');
+					                }
+
+					                me.text((current_perc)+'% COMPLETE SKILLS');
+
+					            }, 50);
+
+					        });
+
+					    },300);
+						</script>
 					</div>
 				</div>
 			</div>
@@ -87,14 +114,14 @@
 					<script>
 
 					var radarChartData = {
-						labels : ["Interactio Design","UX","Front-End","HTML5","CSS3","JavaScript","Git"],
+						labels : ["Interaction Design","UX","Front-End","HTML5","CSS3","JavaScript","Git"],
 						datasets : [
 							{
 								fillColor : "rgba(220,220,220,0.5)",
 								strokeColor : "rgba(220,220,220,1)",
 								pointColor : "rgba(220,220,220,1)",
 								pointStrokeColor : "#fff",
-								data : [70,59,70,71,66,50,55]
+								data : [66,66,70,73,73,53,63]
 							},
 						]
 					}
@@ -130,30 +157,30 @@
 					<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 text-center pantone">
 						<h2>Portfolio</h2>
 					</div>
-					<div class="col-xs-4 col-sm-4 col-md-4 col-lg-4 pantone">
-						<h3>Bougue</h3>
+					<div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+						<h3><a target="_blank" href="http://www.bougue.com.br/">Bougue</a></h3>
 						<a target="_blank" href="http://www.bougue.com.br/"><img src="img/port1.png" class="barter1" alt="bougue"></a>
-						<ul class="slaves list-unstyled">
-							<li><h5>Fernando Canuto - Founder & CEO</h5></li>
-							<li><h5>Bruno Malvestuto - Development team lider</h5></li>
-							<li><h5>Felippi Vieria - User experience designer</h5></li>
-							<li><h5>Bruno Flora - Development front-end & interaction designer</h5></li>
+						<ul class="slaves list-unstyled box-portfolio">
+							<li><h5><a href="https://twitter.com/fcanuto" target="blank">Fernando Canuto</a> - Founder & CEO</h5></li>
+							<li><h5><a href="https://twitter.com/brunomalvestuto" target="blank">Bruno Malvestuto</a> - Development team lider</h5></li>
+							<li><h5><a href="https://twitter.com/pinalt" target="blank">Felippi Vieria</a> - User experience designer</h5></li>
+							<li><h5><a href="https://twitter.com/brunomflora" target="blank">Bruno Flora</a> - Development front-end & interaction designer</h5></li>
 						</ul>
 					</div>
-					<div class="col-xs-4 col-sm-4 col-md-4 col-lg-4 pantone">
-						<h3>Elos Paraisópolis</h3>
+					<div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+						<h3><a target="_blank" href="http://www.elosparaisopolis.com.br/">Elos Paraisópolis</a></h3>
 						<a target="_blank" href="http://www.elosparaisopolis.com.br/"><img src="img/port2.png" class="barter1" alt="Elos Paraisopolis"></a>
-						<ul class="slaves list-unstyled">
-							<li><h5>Junior Magalhães - Interaction designer & Development front-end</h5></li>
-							<li><h5>Bruno Flora - Interaction designer & Development front-end</h5></li>
-							<li><h5>José Carlos Sousa - Interaction designer</h5></li>
+						<ul class="slaves list-unstyled box-portfolio">
+							<li><h5><a href="https://twitter.com/juniormag2" target="blank">Junior Magalhães</a> - Interaction designer & Development front-end</h5></li>
+							<li><h5><a href="https://twitter.com/brunomflora" target="blank">Bruno Flora</a> - Interaction designer & Development front-end</h5></li>
+							<li><h5><a href="https://www.facebook.com/josecarlos.sousa.3998?ref=ts&fref=ts" target="blank">José Carlos Sousa</a> - Interaction designer</h5></li>
 						</ul>
 					</div>
-					<div class="col-xs-4 col-sm-4 col-md-4 col-lg-4 pantone">
-						<h3>Mameli Pizzaria</h3>
+					<div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+						<h3><a target="_blank" href="http://www.mamelipizzaria.com.br/">Mameli Pizzaria</a></h3>
 						<a target="_blank" href="http://www.mamelipizzaria.com.br/"><img src="img/port3.png" class="barter1" alt="Mameli Pizzaria"></a>
-						<ul class="slaves list-unstyled">
-							<li><h5>Bruno Flora - Interaction designer & Development front-end</h5></li>
+						<ul class="slaves list-unstyled box-portfolio">
+							<li><h5><a href="https://twitter.com/brunomflora" target="blank">Bruno Flora</a> - Interaction designer & Development front-end</h5></li>
 						</ul>
 					</div>
 				</div>
@@ -167,20 +194,20 @@
 						<h2>Contact</h2>
 					</div>
 					<ul class="list-inline">
-						<li class="col-xs-2 col-sm-2 col-md-2 col-lg-2 col-offset-1">
-							<a target="_blank" href="https://github.com/brunoflora"><img class="github"></a>
+						<li>
+							<a target="blank" href="https://github.com/brunoflora"><img class="img-circle github"></a>
 						</li>
-						<li class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
-							<a target="_blank" href="http://www.linkedin.com/in/brunomflora"><img class="linkedin"></a>
+						<li>
+							<a target="blank" href="http://www.linkedin.com/in/brunomflora"><img class="linkedin img-circle"></a>
 						</li>
-						<li class="social-primary col-xs-2 col-sm-2 col-md-2 col-lg-2">
-							<a target="_blank" href="https://twitter.com/brunomflora"><img class="twitter"></a>
+						<li>
+							<a target="blank" href="https://twitter.com/brunomflora"><img class="twitter img-circle"></a>
 						</li>
-						<li class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
-							<a target="_blank" href="https://plus.google.com/108479895265142453184/about" rel="author"><img class="google"></a>
+						<li>
+							<a target="blank" href="https://plus.google.com/108479895265142453184/about" rel="author"><img class="google img-circle"></a>
 						</li>
-						<li class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
-							<a target="_blank" href="https://www.facebook.com/bmfdesigner"><img class="facebook"></a>
+						<li>
+							<a target="blank" href="https://www.facebook.com/bmfdesigner"><img class="facebook img-circle"></a>
 						</li>
 					</ul>
 				</div>
