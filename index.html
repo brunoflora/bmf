@@ -8,30 +8,58 @@
 		<meta charset="UTF-8">
 		<meta name="author" content="Bruno Flora"/>
 		<meta http-equiv="pragma" content="no-cache" />
-		<meta name="description" content="brunoflora.com - designer de interação e desenvolvedor front-end"/>
+		<meta name="description" content="front-end and interaction designer"/>
 		<meta name="keywords" content="desenvolvedor front-end, designer de interação, design digital, ux">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<meta name="google-site-verification" content="DIVJYjohkcqVfknUqfIf4NxIin6W1vAcGditTdkDat0" />
+
+		<!-- Update your html tag to include the itemscope and itemtype attributes. -->
+		<html itemscope itemtype="http://schema.org/Person">
+
+		<!-- Add the following three tags inside head. -->
+		<meta itemprop="name" content="bruno flora">
+		<meta itemprop="description" content="front-end and interaction designer">
+		<meta itemprop="image" content="http://www.brunoflora.com/">
+
 
 		<!-- AUTODETECTING PHONE NUMBERS -->
 		<meta name="format-detection" content="telephone=no">
 		<meta http-equiv="x-rim-auto-match" content="none">
 		<!-- google web tracking -->
 		<script type="text/javascript">
-			var _gaq = _gaq || [];
-			_gaq.push(['_setAccount', 'UA-29799259-1']);
-			_gaq.push(['_trackPageview']);
 
-			(function() {
-				var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-				ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-				var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-			})();
+		  var _gaq = _gaq || [];
+		  _gaq.push(['_setAccount', 'UA-29799259-1']);
+		  _gaq.push(['_setDomainName', 'brunoflora.com']);
+		  _gaq.push(['_setAllowLinker', true]);
+		  _gaq.push(['_trackPageview']);
+
+		  (function() {
+		    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		    ga.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'stats.g.doubleclick.net/dc.js';
+		    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		  })();
+
 		</script>
 		<!-- Place this tag in your head or just before your close body tag. -->
 		<script type="text/javascript" src="https://apis.google.com/js/plusone.js">
 			{parsetags: 'explicit'}
 		</script>
+		<!-- Google Analytics Content Experiment code -->
+		<script>function utmx_section(){}function utmx(){}(function(){var
+		k='57125021-0',d=document,l=d.location,c=d.cookie;
+		if(l.search.indexOf('utm_expid='+k)>0)return;
+		function f(n){if(c){var i=c.indexOf(n+'=');if(i>-1){var j=c.
+		indexOf(';',i);return escape(c.substring(i+n.length+1,j<0?c.
+		length:j))}}}var x=f('__utmx'),xx=f('__utmxx'),h=l.hash;d.write(
+		'<sc'+'ript src="'+'http'+(l.protocol=='https:'?'s://ssl':
+		'://www')+'.google-analytics.com/ga_exp.js?'+'utmxkey='+k+
+		'&utmx='+(x?x:'')+'&utmxx='+(xx?xx:'')+'&utmxtime='+new Date().
+		valueOf()+(h?'&utmxhash='+escape(h.substr(1)):'')+
+		'" type="text/javascript" charset="utf-8"><\/sc'+'ript>')})();
+		</script><script>utmx('url','A/B');</script>
+		<!-- End of Google Analytics Content Experiment code -->
+
 		<!-- Place this render call where appropriate. -->
 		<script type="text/javascript">gapi.plusone.go();</script>
 
@@ -73,9 +101,8 @@
 				<p>
 					<h2 class="pantona">...front-end and interaction designer in development...</h2>
 				</p>
-				<div class="progress progress-striped active">
-					<div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="35" aria-valuemin="0" aria-valuemax="100" style="float: left; width: 0%; " data-percentage="35">
-						<!-- <span class="sr-only"><strong>SKILLS: 35% COMPLETE</strong></span> -->
+				<!-- <div class="progress progress-striped active">
+					<div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100" style="float: left; width: 0%; " data-percentage="65">
 						<script>
 						setTimeout(function(){
 
@@ -104,7 +131,7 @@
 					    },300);
 						</script>
 					</div>
-				</div>
+				</div> -->
 			</div>
 		</main>
 		<div class="container">
@@ -204,12 +231,39 @@
 							<a target="blank" href="https://twitter.com/brunomflora"><img class="twitter img-circle"></a>
 						</li>
 						<li>
-							<a target="blank" href="https://plus.google.com/108479895265142453184/about" rel="author"><img class="google img-circle"></a>
+							<a target="blank" href="https://plus.google.com/108479895265142453184/about" rel="author" alt="bruno flora"><img class="google img-circle"></a>
 						</li>
 						<li>
 							<a target="blank" href="https://www.facebook.com/bmfdesigner"><img class="facebook img-circle"></a>
 						</li>
 					</ul>
+					<!-- <div itemscope itemtype="http://schema.org/Person">
+					<span itemprop="name">bruno flora</span>
+					<img src="janedoe.jpg" itemprop="image" />
+
+					<span itemprop="jobTitle">designer</span>
+					<div itemprop="address" itemscope itemtype="http://schema.org/PostalAddress">
+					<span itemprop="streetAddress">
+					20341 Whitworth Institute
+					405 N. Whitworth
+					</span>
+					<span itemprop="addressLocality">Sãp Paulo</span>,
+					<span itemprop="addressRegion">SP</span>
+					<span itemprop="postalCode">04011-062</span>
+					</div>
+					<span itemprop="telephone">(11) 99233-6380</span>
+					<a href="mailto:jane-doe@xyz.edu" itemprop="email">
+					jane-doe@xyz.edu</a>
+
+					Jane's home page:
+					<a href="http://www.janedoe.com" itemprop="url">janedoe.com</a>
+
+					Graduate students:
+					<a href="http://www.xyz.edu/students/alicejones.html" itemprop="colleague">
+					Alice Jones</a>
+					<a href="http://www.xyz.edu/students/bobsmith.html" itemprop="colleague">
+					Bob Smith</a>
+					</div> -->
 				</div>
 			</div>
 		</footer>
