@@ -3,6 +3,20 @@ body {
 	margin: 1%;
 }
 
+.fixed {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 2;
+	background-color: #FFF;
+	height: 260px;
+}
+
+.fixed-padding {
+	padding-top: 200px;
+}
+
 .canvas {
 	padding: 0;
 }
@@ -28,7 +42,7 @@ body {
 .skull {
 	width: 130px;
 	height: 130px;
-	margin: 5% auto;
+	margin: 1% auto;
 	border-radius: 65px;
 	background-image: url("../img/skull.png");
 	background-position: 0px -130px;
