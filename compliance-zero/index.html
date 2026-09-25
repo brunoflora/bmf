@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Operação Compliance Zero</title>
+<meta name="description" content="Grafo interativo das conexões registradas em autos e relatórios da Polícia Federal e do STF na Operação Compliance Zero (2026).">
+<script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+<style>
+  :root {
+    --bg: #121212;
+    --card: rgba(22, 22, 26, 0.92);
+    --card-solid: #17171b;
+    --line: #2a2a31;
+    --line-2: #3b3b45;
+    --ink: #ececef;
+    --ink-2: #b6b6c0;
+    --ink-3: #8b8b97;
+    --formal: #8795ab;
+    --suspeita: #b9a3dc;
+    --focus: #8cc8ff;
+    --radius: 12px;
+    --font: Inter, "Segoe UI", Roboto, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    background: var(--bg); color: var(--ink);
+    font: 14px/1.45 var(--font); -webkit-font-smoothing: antialiased;
+  }
+  #graph { position: fixed; inset: 0; background: var(--bg); }
+  #graph:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); backdrop-filter: blur(6px);
+  }
+
+  /* Cabeçalho + barra de ferramentas */
+  #top {
+    position: fixed; top: calc(16px + env(safe-area-inset-top, 0px)); left: 16px; right: 16px; z-index: 10;
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+    pointer-events: none;
+  }
+  #top > * { pointer-events: auto; }
+  #hdr { width: 300px; padding: 16px 18px; }
+  .kicker { margin: 0 0 6px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+  h1 { margin: 0; font-size: 22px; line-height: 1.2; letter-spacing: -0.01em; }
+  .sub { margin: 8px 0 0; color: var(--ink-2); font-size: 13px; }
+  .stats { margin: 10px 0 0; font-size: 12px; color: var(--ink-3); }
+  .stats b { color: var(--ink); font-weight: 600; }
+
+  #toolbar { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  button {
+    font: inherit; font-size: 12.5px; color: var(--ink); cursor: pointer;
+    background: var(--card-solid); border: 1px solid var(--line-2); border-radius: 999px; padding: 7px 12px;
+  }
+  button:hover { border-color: #5c5c69; }
+  button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  #toolbar button[aria-pressed="false"] { color: var(--ink-3); border-style: dashed; }
+
+  /* Legenda fixa */
+  #legend {
+    position: fixed; left: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 10; width: 300px;
+    max-height: calc(100vh - 290px); overflow: auto; padding: 12px 16px;
+  }
+  #legend summary {
+    cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center;
+    font-weight: 600; font-size: 13px;
+  }
+  #legend summary::-webkit-details-marker { display: none; }
+  #legend summary::after { content: "–"; color: var(--ink-3); font-weight: 400; }
+  #legend details:not([open]) summary::after { content: "+"; }
+  .lg-title { margin: 12px 0 6px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+  .lg { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .lg li { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--ink-2); }
+  .lg li b { color: var(--ink); font-weight: 600; }
+  .lg svg { flex: none; }
+  .note { margin: 12px 0 0; font-size: 11.5px; color: var(--ink-3); }
+
+  /* Painel de detalhes (clique) */
+  #info {
+    position: fixed; right: 16px; top: calc(72px + env(safe-area-inset-top, 0px)); z-index: 11; width: 370px;
+    max-height: calc(100vh - 88px); overflow: auto; padding: 18px;
+  }
+  #info[hidden] { display: none; }
+  .x {
+    position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; padding: 0;
+    border-radius: 8px; font-size: 18px; line-height: 1;
+  }
+  #info h2 { margin: 6px 40px 2px 0; font-size: 18px; line-height: 1.25; }
+  #info h3 { margin: 18px 0 8px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+  .role { color: var(--ink-2); font-size: 13px; }
+  .desc { margin: 10px 0 0; }
+  .ends { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .conn { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .conn button {
+    display: block; width: 100%; text-align: left; border-radius: 10px; padding: 9px 11px; background: #1d1d22;
+  }
+  .conn .l { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+  .conn .w { margin-top: 2px; color: var(--ink-2); font-size: 12px; }
+  .conn .d { margin-top: 4px; color: var(--ink-2); font-size: 12px; line-height: 1.4; }
+  .src { margin: 0; padding-left: 18px; font-size: 12.5px; }
+  .src li { margin-bottom: 4px; }
+  .src a { color: var(--focus); }
+  .foot { margin: 16px 0 0; font-size: 11.5px; color: var(--ink-3); }
+
+  /* Tooltips nativos do vis-network (title) */
+  #graph div.vis-tooltip {
+    background: #1b1b20; color: var(--ink); border: 1px solid var(--line-2); border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55); font: 13px/1.45 var(--font);
+    padding: 10px 12px; max-width: 340px; white-space: normal;
+  }
+  .tt-k { display: flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+  .tt-k.k-f { color: var(--formal); }
+  .tt-k.k-s { color: var(--suspeita); }
+  .sw { width: 11px; height: 11px; border-radius: 3px; border: 1.5px solid; flex: none; }
+  .tt-t { margin-top: 4px; font-weight: 650; font-size: 14px; color: #fff; }
+  .tt-r { color: var(--ink-2); font-size: 12.5px; }
+  .badge {
+    display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 999px;
+    background: #26262d; border: 1px solid var(--line-2); font-size: 11.5px; color: var(--ink);
+  }
+  .tt-p { margin: 8px 0 0; }
+  .tt-h { margin-top: 8px; font-size: 11px; color: var(--ink-3); }
+
+  /* Diálogos: lista de conexões e metodologia */
+  dialog {
+    background: var(--card-solid); color: var(--ink); border: 1px solid var(--line-2); border-radius: 14px;
+    padding: 0; width: min(1000px, calc(100vw - 32px)); max-height: calc(100vh - 48px);
+  }
+  dialog[open] { display: flex; flex-direction: column; }
+  dialog::backdrop { background: rgba(0, 0, 0, 0.62); }
+  .dlg-head {
+    margin: 0; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding: 14px 18px; border-bottom: 1px solid var(--line);
+  }
+  .dlg-head h2 { margin: 0; font-size: 17px; }
+  .dlg-head .x { position: static; }
+  .dlg-body { padding: 16px 18px 20px; overflow: auto; }
+  .prose { max-width: 760px; }
+  .prose p, .prose li { color: var(--ink-2); }
+  .prose b { color: var(--ink); }
+  .prose h3 { margin: 22px 0 8px; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+  table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { position: sticky; top: -16px; background: var(--card-solid); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+  td.muted { color: var(--ink-2); min-width: 260px; }
+  td button { padding: 3px 9px; border-radius: 8px; text-align: left; }
+  .tag { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .err { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); max-width: 420px; text-align: center; color: var(--ink-2); }
+
+  @media (max-width: 760px) {
+    #top { top: calc(12px + env(safe-area-inset-top, 0px)); left: 16px; right: 16px; flex-direction: column; align-items: stretch; gap: 8px; }
+    #hdr { width: auto; padding: 12px 14px; }
+    h1 { font-size: 18px; }
+    .sub { display: none; }
+    .stats { margin-top: 6px; }
+    #toolbar { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; padding-bottom: 2px; }
+    #toolbar button { flex: none; }
+    #legend { left: 16px; right: 16px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); width: auto; max-height: 46vh; }
+    #info { left: 16px; right: 16px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); top: auto; width: auto; max-height: 58vh; }
+  }
+</style>
+</head>
+<body>
+
+<div id="graph" tabindex="0" role="application"
+     aria-label="Grafo interativo da Operação Compliance Zero. A versão em tabela está no botão Lista de conexões."></div>
+
+<div id="top">
+  <header id="hdr" class="card">
+    <p class="kicker">Teia investigativa · Autos e relatórios PF/STF · 2026</p>
+    <h1>Operação Compliance Zero</h1>
+    <p class="sub">Passe o mouse sobre nós e conexões para ver os detalhes. Clique para isolar as conexões de um nó. Arraste, aproxime e afaste livremente.</p>
+    <p class="stats" id="stats"></p>
+  </header>
+  <nav id="toolbar" aria-label="Controles do grafo">
+    <button type="button" id="btn-fit">Centralizar</button>
+    <button type="button" id="btn-phys" aria-pressed="true">Física: ligada</button>
+    <button type="button" id="btn-labels" aria-pressed="true">Rótulos: visíveis</button>
+    <button type="button" id="btn-table">Lista de conexões</button>
+    <button type="button" id="btn-method">Metodologia e fontes</button>
+  </nav>
+</div>
+
+<section id="legend" class="card" aria-label="Legenda">
+  <details id="legend-d" open>
+    <summary>Legenda</summary>
+    <p class="lg-title">Entes</p>
+    <ul class="lg" id="lg-nodes"></ul>
+    <p class="lg-title">Conexões</p>
+    <ul class="lg">
+      <li>
+        <svg width="40" height="12" viewBox="0 0 40 12" aria-hidden="true"><line x1="1" y1="6" x2="31" y2="6" stroke="#8795ab" stroke-width="2"/><path d="M30 1.5 L39 6 L30 10.5 Z" fill="#8795ab"/></svg>
+        <span><b>Registro formal</b> — ato processual ou vínculo registrado nos autos</span>
+      </li>
+      <li>
+        <svg width="40" height="12" viewBox="0 0 40 12" aria-hidden="true"><line x1="1" y1="6" x2="31" y2="6" stroke="#b9a3dc" stroke-width="2" stroke-dasharray="5 4"/><path d="M30 1.5 L39 6 L30 10.5 Z" fill="#b9a3dc"/></svg>
+        <span><b>Suspeita em apuração</b> — fato ainda não julgado</span>
+      </li>
+    </ul>
+    <p class="note">A seta indica o sentido da relação (origem → destino). A representação não implica culpa: aplica-se a presunção de inocência.</p>
+  </details>
+</section>
+
+<aside id="info" class="card" hidden aria-live="polite">
+  <button type="button" class="x" id="info-close" aria-label="Fechar detalhes">×</button>
+  <div id="info-body"></div>
+</aside>
+
+<dialog id="dlg-table" aria-labelledby="t-title">
+  <form method="dialog" class="dlg-head">
+    <h2 id="t-title">Lista de conexões</h2>
+    <button class="x" aria-label="Fechar">×</button>
+  </form>
+  <div class="dlg-body">
+    <table id="tbl">
+      <caption class="sr">Todas as conexões do grafo, com origem, relação, destino, natureza e detalhe.</caption>
+      <thead>
+        <tr><th scope="col">Origem</th><th scope="col">Relação</th><th scope="col">Destino</th><th scope="col">Natureza</th><th scope="col">Detalhe</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</dialog>
+
+<dialog id="dlg-method" aria-labelledby="m-title">
+  <form method="dialog" class="dlg-head">
+    <h2 id="m-title">Metodologia e fontes</h2>
+    <button class="x" aria-label="Fechar">×</button>
+  </form>
+  <div class="dlg-body prose">
+    <p><b>Base de dados.</b> Compilação de autos e relatórios da Polícia Federal e do STF (2026) fornecida pelo autor do painel e conferida em 25/09/2026 com as reportagens públicas listadas abaixo.</p>
+    <p><b>Linha sólida: registro formal.</b> Ato processual ou vínculo formal registrado: operação, prisão, inquérito, medida cautelar, vínculo societário ou autoria legislativa.</p>
+    <p><b>Linha tracejada: suspeita em apuração.</b> Fato descrito pela investigação e ainda não julgado.</p>
+    <p><b>Presunção de inocência.</b> Nenhuma conexão representa juízo de culpa (Constituição Federal, art. 5º, LVII). Rótulos e descrições seguem a terminologia das investigações, sem adjetivação, com o mesmo critério para todos os núcleos políticos.</p>
+    <h3>Ajustes em relação à base original</h3>
+    <ul>
+      <li><b>“Emenda Master”:</b> apresentada por Ciro Nogueira (PP-PI) em agosto de 2024. Aparece ligada a Ciro (autoria) e a Jaques Wagner (articulação apontada pela PF), e não apenas ao núcleo PT.</li>
+      <li><b>Desvio de Emendas:</b> a apuração localizada (Operação Make Up, relatoria de Flávio Dino) envolve Mário Frias (PL-SP) e entidades ligadas à produtora do “Dark Horse”; não foi localizada vinculação ao Centrão.</li>
+      <li><b>Cargos:</b> Cláudio Castro renunciou ao governo do RJ em 23/03/2026; Eduardo Bolsonaro teve a perda do mandato declarada pela Mesa da Câmara.</li>
+      <li><b>Vantagens atribuídas a Jaques Wagner:</b> a PF atribui ingressos, aeronaves e a estrutura de compra do apartamento a Augusto Lima.</li>
+      <li><b>“Dark Horse”:</b> cinebiografia de Jair Bolsonaro.</li>
+      <li><b>Lobby no caso Will Bank:</b> mantido como menção da base original; não localizado nas fontes consultadas.</li>
+    </ul>
+    <h3>Fontes públicas consultadas</h3>
+    <ul class="src" id="m-src"></ul>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  'use strict';
+
+  var FONT = 'Inter, "Segoe UI", Roboto, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif';
+  var COR = { formal: '#8795AB', suspeita: '#B9A3DC', label: '#CDD2DA', labelBg: 'rgba(18,18,18,0.9)' };
+
+  // Categorias: cor de preenchimento conforme especificação; borda clara para contraste no fundo #121212.
+  var CAT = {
+    fin:  { nome: 'Núcleo Financeiro',            shape: 'hexagon', bg: '#8B0000', border: '#FF6B6B', hi: '#B21A1A', size: 22, mass: 2,   glow: 'rgba(255,70,70,0.38)', glowSize: 22 },
+    ctrl: { nome: 'Órgãos de controle (PF/STF)',  shape: 'ellipse', bg: '#1E90FF', border: '#A8D3FF', hi: '#4DA8FF', mass: 2, ink: '#061A2E', ink2: '#0B2744', glow: 'rgba(0,0,0,0.55)', glowSize: 10 },
+    esq:  { nome: 'Esquemas sob apuração',        shape: 'diamond', bg: '#DAA520', border: '#F7DA83', hi: '#E9B73A', size: 24, mass: 2,   glow: 'rgba(218,165,32,0.30)', glowSize: 16 },
+    pl:   { nome: 'Núcleo PL',                    shape: 'box',     bg: '#006400', border: '#66D466', hi: '#0B7D0B', mass: 1.5, ink: '#FFFFFF', ink2: 'rgba(255,255,255,0.86)', glow: 'rgba(0,0,0,0.55)', glowSize: 10 },
+    pt:   { nome: 'Núcleo PT / Base do governo',  shape: 'box',     bg: '#DC143C', border: '#FF9AAE', hi: '#E8385B', mass: 1.5, ink: '#FFFFFF', ink2: 'rgba(255,255,255,0.9)',  glow: 'rgba(0,0,0,0.55)', glowSize: 10 },
+    cen:  { nome: 'Núcleo Centrão / Outros',      shape: 'box',     bg: '#8B4513', border: '#DDA56B', hi: '#A35A22', mass: 1.5, ink: '#FFFFFF', ink2: 'rgba(255,255,255,0.86)', glow: 'rgba(0,0,0,0.55)', glowSize: 10 }
+  };
+
+  var FONTES = {
+    fases:   { v: 'Times Brasil (CNBC)', t: 'Operação Compliance Zero: entenda o que já aconteceu em cada fase da investigação', u: 'https://timesbrasil.com.br/empresas-e-negocios/operacao-compliance-zero-entenda-o-que-ja-aconteceu-em-cada-fase-da-investigacao/' },
+    wiki:    { v: 'Wikipédia', t: 'Operação Compliance Zero', u: 'https://pt.wikipedia.org/wiki/Opera%C3%A7%C3%A3o_Compliance_Zero' },
+    f3:      { v: 'Agência Brasil', t: 'PF prende Daniel Vorcaro em 3ª fase da Operação Compliance Zero', u: 'https://agenciabrasil.ebc.com.br/justica/noticia/2026-03/pf-deflagra-terceira-fase-da-operacao-compliance-zero' },
+    will:    { v: 'Bloomberg (em espanhol)', t: 'Reportagem sobre a liquidação do Will Bank, do conglomerado Master (21/01/2026)', u: 'https://www.bloomberg.com/news/articles/2026-01-21/brasil-liquidan-fintech-will-de-banco-master-pese-oferta-de-mubadala' },
+    turma1:  { v: 'InfoMoney', t: '“Medida mais drástica” e “sacode”: PF aponta intimidação de adversários por Vorcaro', u: 'https://www.infomoney.com.br/politica/medida-mais-drastica-e-sacode-pf-aponta-intimidacao-de-adversarios-por-vorcaro/' },
+    turma2:  { v: 'Money Times', t: '“A Turma” de Vorcaro tinha informações do MPF, da PF e até da Interpol', u: 'https://www.moneytimes.com.br/a-turma-de-vorcaro-tinha-informacoes-do-mpf-da-pf-e-ate-da-interpol-pads/' },
+    bc1:     { v: 'InfoMoney', t: 'Vorcaro “corrompeu” ex-servidores do BC com mesada e viagens à Disney, diz PF', u: 'https://www.infomoney.com.br/politica/pf-aponta-que-ex-diretor-e-ex-servidor-do-bc-receberam-dinheiro-para-ajudar-vorcaro/' },
+    bc2:     { v: 'Gazeta do Povo', t: 'CGU abre processo contra servidores do BC investigados por relação com Vorcaro', u: 'https://www.gazetadopovo.com.br/republica/cgu-processo-servidores-bc-investigados-relacao-vorcaro/' },
+    flavio1: { v: 'CNN Brasil', t: 'Flávio é investigado no STF sobre Dark Horse e relação com Vorcaro', u: 'https://www.cnnbrasil.com.br/blogs/teo-cury/politica/flavio-bolsonaro-e-investigado-no-stf-sobre-financiamento-de-dark-horse/' },
+    flavio2: { v: 'CNN Brasil', t: 'PF mostra conversas de Flávio com Vorcaro sobre recursos para Dark Horse', u: 'https://www.cnnbrasil.com.br/politica/pf-mostra-conversas-de-flavio-com-vorcaro-sobre-recursos-para-dark-horse/' },
+    dh1:     { v: 'Brasil de Fato', t: 'Intercept: documentos mostram como Vorcaro enviou dinheiro aos EUA para financiar “Dark Horse”', u: 'https://www.brasildefato.com.br/2026/06/09/intercept-documentos-mostram-como-vorcaro-enviou-dinheiro-aos-eua-para-financiar-dark-horse/' },
+    dh2:     { v: 'SBT News', t: 'Vorcaro mudou forma de pagar Dark Horse após operação falhar', u: 'https://sbtnews.sbt.com.br/noticia/politica/vorcaro-mudou-forma-de-pagar-dark-horse-apos-operacao-falhar' },
+    edu1:    { v: 'Intercept Brasil', t: 'Eduardo Bolsonaro tinha poder sobre dinheiro do “Dark Horse”, revela contrato', u: 'https://www.intercept.com.br/2026/05/15/eduardo-bolsonaro-poder-dinheiro-dark-horse-contrato/' },
+    edu2:    { v: 'Câmara dos Deputados', t: 'Mesa Diretora da Câmara declara a perda dos mandatos de Eduardo Bolsonaro e Delegado Ramagem', u: 'https://www.camara.leg.br/noticias/1234829-mesa-diretora-da-camara-declara-a-perda-dos-mandatos-de-eduardo-bolsonaro-e-delegado-ramagem/' },
+    frias1:  { v: 'Jovem Pan', t: 'Dino proíbe Mário Frias de deixar o país e determina recolhimento de passaporte', u: 'https://jovempan.com.br/politica/flavio-dino-stf-mario-frias/' },
+    mk1:     { v: 'Exame', t: 'Entenda a operação que liga emendas parlamentares, o filme Dark Horse e contratos públicos', u: 'https://exame.com/brasil/entenda-a-operacao-que-liga-emendas-parlamentares-o-filme-dark-horse-e-contratos-publicos/' },
+    mk2:     { v: 'Jornal de Brasília', t: 'Dino: inquérito aponta desvio de emendas em SP e menciona ligação com o PCC e Frias', u: 'https://jornaldebrasilia.com.br/noticias/politica-e-poder/dino-inquerito-aponta-desvio-de-emendas-em-sp-e-menciona-ligacao-com-o-pcc-e-frias/' },
+    castro1: { v: 'Congresso em Foco', t: 'Cláudio Castro é alvo da PF por aplicações do Rioprevidência no Master', u: 'https://www.congressoemfoco.com.br/noticia/119165/claudio-castro-e-alvo-da-pf-por-aplicacoes-do-rioprevidencia-no-master' },
+    wagner1: { v: 'Gazeta do Povo', t: 'O esquema e trocas entre Jaques Wagner e cúpula do Banco Master', u: 'https://www.gazetadopovo.com.br/republica/apartamento-avioes-e-taylor-swift-o-esquema-e-as-trocas-entre-jaques-wagner-e-cupula-do-master/' },
+    wagner2: { v: 'InfoMoney', t: 'PF diz que sócio de Vorcaro pagou shows de Taylor Swift para Jaques, afirma jornal', u: 'https://www.infomoney.com.br/politica/pf-diz-que-socio-de-vorcaro-pagou-shows-de-taylor-swift-para-jaques-afirma-jornal/' },
+    ciro1:   { v: 'CNN Brasil', t: 'Ciro Nogueira recebeu ao menos R$ 6 milhões em mesadas de Vorcaro, diz PF', u: 'https://www.cnnbrasil.com.br/politica/ciro-nogueira-recebeu-ao-menos-r-6-milhoes-em-mesadas-de-vorcaro-diz-pf/' },
+    ciro2:   { v: 'Gazeta do Povo', t: 'Ciro Nogueira é alvo da PF por suspeita de mesada de Vorcaro', u: 'https://www.gazetadopovo.com.br/republica/ciro-nogueira-e-alvo-de-busca-e-apreensao-no-caso-master/' },
+    em1:     { v: 'Agência Brasil', t: 'Emenda “comprada” por dono do Master colocaria FGC em risco', u: 'https://agenciabrasil.ebc.com.br/economia/noticia/2026-05/emenda-comprada-por-dono-do-master-colocaria-fgc-em-risco' },
+    em2:     { v: 'Agência Pública', t: 'Emenda Master: como atuação de Ciro Nogueira implodiria o FGC', u: 'https://apublica.org/2026/05/emenda-master-como-atuacao-de-ciro-nogueira-implodiria-o-fgc/' }
+  };
+
+  // ENTES (nós). label = rótulo curto no grafo; demais campos alimentam tooltip e painel.
+  var NODES = [
+    // A. Núcleo Financeiro
+    { id: 'master', cat: 'fin', polo: 'centro', x: 5, y: 45, size: 36, mass: 5,
+      label: 'Banco Master', papel: 'Instituição financeira', status: 'Liquidação extrajudicial decretada em 18/11/2025',
+      texto: 'Instituição financeira central e pivô da Operação Compliance Zero. O Banco Central decretou a liquidação extrajudicial do banco em 18/11/2025; o Will Bank, do mesmo conglomerado, foi liquidado em janeiro de 2026.',
+      fontes: ['fases', 'wiki', 'will'] },
+    { id: 'vorcaro', cat: 'fin', polo: 'centro', x: 190, y: 5, size: 28, mass: 3.5,
+      label: 'Daniel Vorcaro', papel: 'Ex-controlador do Banco Master', status: 'Preso preventivamente na 3ª fase (04/03/2026)',
+      texto: 'Preso na 1ª fase da operação (novembro de 2025) e solto por decisão do TRF-1 após 11 dias; preso novamente na 3ª fase, em 04/03/2026, por ordem do ministro André Mendonça (STF). A 3ª fase apura ameaça, corrupção, lavagem de dinheiro e invasão de dispositivo informático, praticados em organização criminosa.',
+      fontes: ['f3', 'fases'] },
+    { id: 'lima', cat: 'fin', polo: 'centro', x: -245, y: 110,
+      label: 'Augusto Lima', papel: 'Ex-sócio do Banco Master', status: 'Citado em interceptações e relatórios financeiros',
+      texto: 'Interlocutor político citado em interceptações e relatórios financeiros. Segundo relatório da PF, pagou ingressos de show a familiares do senador Jaques Wagner, disponibilizou aeronaves e coordenou a estrutura de compra de um apartamento destinado ao senador.',
+      fontes: ['wagner1', 'wagner2'] },
+    { id: 'turma', cat: 'fin', polo: 'centro', x: 230, y: 190,
+      label: '“A Turma”', papel: 'Estrutura paralela do banco', status: 'Apontada pela PF · suspeita em apuração',
+      texto: 'Apontada pela PF como braço de vigilância e intimidação privada. Segundo a investigação, revelada em março de 2026, tinha seis integrantes, era mantida por Vorcaro com cerca de R$ 1 milhão por mês e obtinha informações de sistemas do MPF, da PF e da Interpol.',
+      fontes: ['turma1', 'turma2'] },
+    { id: 'bc', cat: 'fin', polo: 'centro', x: 100, y: -240,
+      label: 'Servidores do BC', nome: 'Servidores do Banco Central', papel: 'Banco Central do Brasil', status: 'Investigados',
+      texto: 'Investigados sob suspeita de cooptação e recebimento de propina para afrouxar fiscalizações. Segundo a PF, um ex-diretor de Fiscalização e um ex-chefe de departamento de supervisão atuavam como “consultores informais” do banco, remunerados por contratos de consultoria simulados. A CGU abriu processo disciplinar.',
+      fontes: ['bc1', 'bc2'] },
+
+    // B. Órgãos de controle
+    { id: 'pf', cat: 'ctrl', polo: 'ctrl', x: -155, y: -345,
+      label: 'Polícia Federal', papel: 'Polícia judiciária da União', status: 'Órgão investigador',
+      texto: 'Deflagrou a Operação Compliance Zero (1ª fase em novembro de 2025; ao menos oito fases até 2026) e conduz a Operação Make Up, sobre emendas parlamentares.',
+      fontes: ['fases', 'mk1'] },
+    { id: 'stf', cat: 'ctrl', polo: 'ctrl', x: 275, y: -505,
+      label: 'STF', nome: 'Supremo Tribunal Federal', papel: 'Supremo Tribunal Federal', status: 'Instância de supervisão',
+      texto: 'Inquéritos relatados pelos ministros André Mendonça (Operação Compliance Zero / caso Master) e Flávio Dino (emendas parlamentares / Operação Make Up).',
+      fontes: ['f3', 'frias1'] },
+
+    // Esquemas (posicionados entre os atores a que se ligam)
+    { id: 'darkhorse', cat: 'esq', x: 400, y: 25, size: 26,
+      label: 'Projeto “Dark Horse”', papel: 'Cinebiografia de Jair Bolsonaro', status: 'Esquema investigado',
+      texto: 'Contrato sob suspeita de US$ 24 milhões (≈ R$ 134 milhões) para financiar a cinebiografia de Jair Bolsonaro; ao menos US$ 10,6 milhões teriam sido pagos entre fevereiro e maio de 2025. É objeto do inquérito sobre Flávio Bolsonaro e ponto de convergência da apuração sobre emendas parlamentares.',
+      fontes: ['dh1', 'dh2', 'flavio1'] },
+    { id: 'emenda', cat: 'esq', x: -375, y: 300, size: 26,
+      label: '“Emenda Master”', papel: 'Emenda à PEC 65/2023 (FGC)', status: 'Tentativa de alteração legislativa · em apuração',
+      texto: 'Articulação no Congresso para elevar a cobertura do Fundo Garantidor de Créditos (FGC) de R$ 250 mil para R$ 1 milhão por CPF, a favor do banco. A emenda foi apresentada em agosto de 2024 pelo senador Ciro Nogueira (PP-PI); segundo a PF, o texto foi redigido por assessores do Banco Master. Relatório da PF sobre Jaques Wagner associa o gabinete do senador a articulações sobre o FGC. A base original menciona ainda lobby no caso Will Bank, não localizado nas fontes públicas consultadas.',
+      fontes: ['em1', 'em2', 'wagner1'] },
+    { id: 'desvio', cat: 'esq', x: 485, y: -455,
+      label: 'Desvio de Emendas', nome: 'Desvio de Emendas Parlamentares', papel: 'Operação Make Up (PF)', status: 'Apuração paralela · Min. Flávio Dino',
+      texto: 'Apuração paralela sobre o direcionamento de emendas parlamentares de deputados federais a entidades (Instituto Conhecer Brasil e Academia Nacional de Cultura) ligadas à produtora do filme “Dark Horse”, com suspeita de desvio para a GoUp Entertainment. Em 10/09/2026, a PF cumpriu 49 mandados de busca.',
+      fontes: ['mk1', 'mk2', 'frias1'] },
+
+    // C. Núcleo PL
+    { id: 'flavio', cat: 'pl', polo: 'pl', x: 660, y: 150,
+      label: 'Flávio Bolsonaro', papel: 'Senador · PL-RJ', status: 'Alvo formal · inquérito desde 22/07/2026',
+      texto: 'Investigado em inquérito aberto em 22/07/2026 por decisão do ministro André Mendonça, sob sigilo, por suspeita de lavagem de dinheiro, evasão de divisas e corrupção ligadas aos repasses de Vorcaro ao projeto “Dark Horse”.',
+      fontes: ['flavio1', 'flavio2'] },
+    { id: 'eduardo', cat: 'pl', polo: 'pl', x: 395, y: 350,
+      label: 'Eduardo Bolsonaro', papel: 'Ex-deputado federal · PL-SP', status: 'Citado',
+      texto: 'Citado nas investigações sobre o financiamento do projeto audiovisual. Minuta de contrato revelada pelo Intercept Brasil atribui a ele poder sobre os recursos do filme. A Mesa da Câmara declarou a perda de seu mandato por excesso de faltas.',
+      fontes: ['edu1', 'edu2'] },
+    { id: 'frias', cat: 'pl', polo: 'pl', x: 635, y: -195,
+      label: 'Mário Frias', papel: 'Deputado federal · PL-SP', status: 'Alvo de medidas cautelares (10/09/2026)',
+      texto: 'Participação registrada no projeto: assina o argumento e a produção executiva do filme. Em 10/09/2026, o ministro Flávio Dino o proibiu de deixar o país, determinou o recolhimento do passaporte e vedou contato com outros investigados. A PF apura R$ 2 milhões em emendas de sua autoria destinadas ao Instituto Conhecer Brasil.',
+      fontes: ['frias1', 'mk2'] },
+    { id: 'castro', cat: 'pl', polo: 'pl', x: 275, y: -320,
+      label: 'Cláudio Castro', papel: 'Ex-governador do RJ · PL', status: 'Alvo da 8ª fase da Operação Compliance Zero',
+      texto: 'Investigado por vínculos políticos com o banco. A 8ª fase apura suposto papel político relevante na viabilização de aplicações de cerca de R$ 3,6 bilhões do RioPrevidência em Letras Financeiras e fundos ligados ao Banco Master. Renunciou ao governo do RJ em 23/03/2026.',
+      fontes: ['castro1'] },
+
+    // D. Núcleo PT / Base do governo
+    { id: 'wagner', cat: 'pt', polo: 'pt', x: -510, y: -40,
+      label: 'Jaques Wagner', papel: 'Senador · PT-BA', status: 'Alvo formal · inquérito',
+      texto: 'Ex-líder do governo no Senado. Inquérito autorizado pelo ministro André Mendonça por suspeita de corrupção e lavagem de dinheiro. Relatórios da PF apontam repasses, uso de jatinhos, ingressos para show internacional (Taylor Swift) e articulação para compra de imóvel em Salvador (R$ 2,45 milhões), em troca de influência no Senado.',
+      fontes: ['wagner1', 'wagner2'] },
+
+    // E. Núcleo Centrão
+    { id: 'ciro', cat: 'cen', polo: 'cen', x: -25, y: 355,
+      label: 'Ciro Nogueira', papel: 'Senador · PP-PI', status: 'Alvo de busca e apreensão (5ª fase, 07/05/2026)',
+      texto: 'Alvo de apuração. Com base em relatórios da PF, decisão do ministro André Mendonça aponta suspeita de recebimento de mesada de R$ 300 mil do ex-banqueiro, que pode ter chegado a R$ 500 mil, por cerca de 20 meses. Autor da “Emenda Master” (agosto de 2024).',
+      fontes: ['ciro1', 'ciro2', 'em1'] }
+  ];
+
+  // CONEXÕES. tipo 'formal' = linha sólida; 'suspeita' = linha tracejada.
+  var EDGES = [
+    // Registros formais
+    { id: 'e01', from: 'pf', to: 'master', tipo: 'formal', label: 'Op. Compliance Zero',
+      texto: 'A PF deflagrou a Operação Compliance Zero (1ª fase em novembro de 2025), que tem o Banco Master como pivô. O Banco Central decretou a liquidação extrajudicial do banco em 18/11/2025.', fontes: ['fases', 'wiki'] },
+    { id: 'e02', from: 'pf', to: 'vorcaro', tipo: 'formal', label: 'Prisão · 3ª fase',
+      texto: 'Prisão preventiva cumprida na 3ª fase da operação, em 04/03/2026, por ordem do ministro André Mendonça (STF).', fontes: ['f3'] },
+    { id: 'e03', from: 'stf', to: 'pf', tipo: 'formal', label: 'Supervisão',
+      texto: 'Os inquéritos tramitam sob supervisão do STF: relatoria de André Mendonça (caso Master) e de Flávio Dino (emendas parlamentares / Operação Make Up).', fontes: ['f3', 'frias1'] },
+    { id: 'e04', from: 'vorcaro', to: 'master', tipo: 'formal', label: 'Ex-controlador',
+      texto: 'Daniel Vorcaro é ex-controlador do Banco Master.', fontes: ['wiki'] },
+    { id: 'e05', from: 'lima', to: 'master', tipo: 'formal', label: 'Ex-sócio',
+      texto: 'Augusto Lima é ex-sócio de Daniel Vorcaro no Banco Master.', fontes: ['wagner2'] },
+    { id: 'e06', from: 'pf', to: 'bc', tipo: 'formal', label: 'Investigação',
+      texto: 'Servidores e ex-dirigentes do Banco Central investigados pela PF; a CGU abriu processo disciplinar.', fontes: ['bc1', 'bc2'] },
+    { id: 'e07', from: 'stf', to: 'flavio', tipo: 'formal', label: 'Inquérito · jul/2026',
+      texto: 'Inquérito aberto em 22/07/2026 por decisão do ministro André Mendonça, sob sigilo.', fontes: ['flavio1'] },
+    { id: 'e08', from: 'frias', to: 'darkhorse', tipo: 'formal', label: 'Participação',
+      texto: 'Mário Frias assina o argumento e a produção executiva do filme.', fontes: ['mk2', 'frias1'] },
+    { id: 'e09', from: 'stf', to: 'frias', tipo: 'formal', label: 'Cautelares · set/2026',
+      texto: 'Decisão do ministro Flávio Dino: proibição de deixar o país, recolhimento do passaporte e vedação de contato com outros investigados (Operação Make Up).', fontes: ['frias1'] },
+    { id: 'e10', from: 'pf', to: 'castro', tipo: 'formal', label: 'Alvo · 8ª fase',
+      texto: 'Alvo da 8ª fase da Operação Compliance Zero, deflagrada cerca de dois meses após a renúncia ao governo do RJ.', fontes: ['castro1'] },
+    { id: 'e11', from: 'stf', to: 'wagner', tipo: 'formal', label: 'Inquérito',
+      texto: 'Inquérito autorizado pelo ministro André Mendonça por suspeita de corrupção e lavagem de dinheiro; o sigilo do relatório da PF foi levantado em setembro de 2026.', fontes: ['wagner1'] },
+    { id: 'e12', from: 'pf', to: 'ciro', tipo: 'formal', label: 'Busca · 5ª fase',
+      texto: 'Busca e apreensão em 07/05/2026, na 5ª fase da operação, autorizada pelo ministro André Mendonça.', fontes: ['ciro2', 'ciro1'] },
+    { id: 'e13', from: 'pf', to: 'desvio', tipo: 'formal', label: 'Operação Make Up',
+      texto: 'Investigação da PF sob supervisão do ministro Flávio Dino; 49 mandados de busca cumpridos em 10/09/2026.', fontes: ['mk1', 'mk2'] },
+    { id: 'e14', from: 'ciro', to: 'emenda', tipo: 'formal', label: 'Autoria · ago/2024',
+      texto: 'Emenda à PEC 65/2023 apresentada pelo senador em agosto de 2024 (registro legislativo público).', fontes: ['em1', 'em2'] },
+
+    // Suspeitas em apuração
+    { id: 's01', from: 'vorcaro', to: 'turma', tipo: 'suspeita', label: 'Manutenção (suspeita)',
+      texto: 'Segundo a PF, Vorcaro mantinha a estrutura com cerca de R$ 1 milhão por mês, para vigilância, coleta de informações e intimidação de pessoas contrárias a seus interesses.', fontes: ['turma1', 'turma2'] },
+    { id: 's02', from: 'vorcaro', to: 'bc', tipo: 'suspeita', label: 'Cooptação (suspeita)',
+      texto: 'Suspeita de pagamento de propina a servidores para obter informações e afrouxar a fiscalização, por meio de contratos de consultoria simulados.', fontes: ['bc1'] },
+    { id: 's03', from: 'vorcaro', to: 'darkhorse', tipo: 'suspeita', label: 'US$ 24 mi (suspeita)',
+      texto: 'Contrato de financiamento de US$ 24 milhões (≈ R$ 134 milhões) para o filme; ao menos US$ 10,6 milhões teriam sido pagos entre fevereiro e maio de 2025, segundo documentos revelados pelo Intercept Brasil.', fontes: ['dh1', 'dh2'] },
+    { id: 's04', from: 'flavio', to: 'darkhorse', tipo: 'suspeita', label: 'Lavagem/evasão (suspeita)',
+      texto: 'Suspeita de lavagem de dinheiro, evasão de divisas e corrupção ligadas aos repasses de Vorcaro ao projeto; conversas entre o senador e Vorcaro sobre recursos para o filme constam da investigação.', fontes: ['flavio1', 'flavio2'] },
+    { id: 's05', from: 'eduardo', to: 'darkhorse', tipo: 'suspeita', label: 'Citado (apuração)',
+      texto: 'Citado nas investigações sobre o financiamento; minuta de contrato revelada pelo Intercept Brasil atribui a ele poder sobre os recursos do filme.', fontes: ['edu1'] },
+    { id: 's06', from: 'castro', to: 'master', tipo: 'suspeita', label: 'RioPrevidência (suspeita)',
+      texto: 'Suspeita de papel político relevante na viabilização de aplicações de cerca de R$ 3,6 bilhões do RioPrevidência em Letras Financeiras e fundos ligados ao banco.', fontes: ['castro1'] },
+    { id: 's07', from: 'lima', to: 'wagner', tipo: 'suspeita', label: 'Vantagens (suspeita)',
+      texto: 'Relatório da PF aponta ingressos para show de Taylor Swift a familiares do senador, uso de aeronaves ligadas a Augusto Lima e ao banco e compra de apartamento em Salvador (R$ 2,45 milhões) estruturada por fundos de investimento, coordenada por Lima.', fontes: ['wagner1', 'wagner2'] },
+    { id: 's08', from: 'wagner', to: 'master', tipo: 'suspeita', label: 'Atuação no Senado (suspeita)',
+      texto: 'Segundo a PF, em troca das vantagens: atuação pela ampliação de limites do crédito consignado e papel de fiador político na tentativa de compra do Master pelo BRB.', fontes: ['wagner1'] },
+    { id: 's09', from: 'wagner', to: 'emenda', tipo: 'suspeita', label: 'Articulação FGC (suspeita)',
+      texto: 'Relatório da PF associa o gabinete do senador a articulações sobre o FGC, com reuniões do chefe de gabinete com Vorcaro antes da apresentação da emenda.', fontes: ['wagner1'] },
+    { id: 's10', from: 'vorcaro', to: 'ciro', tipo: 'suspeita', label: 'Mesada R$ 300 mil (suspeita)',
+      texto: 'Suspeita, baseada em relatórios da PF, de mesada de R$ 300 mil (que pode ter chegado a R$ 500 mil) por cerca de 20 meses (ao menos R$ 6 milhões), além de despesas de viagens e refeições no exterior.', fontes: ['ciro1', 'ciro2'] },
+    { id: 's11', from: 'master', to: 'emenda', tipo: 'suspeita', label: 'Redação atribuída (suspeita)',
+      texto: 'Segundo a PF, o texto da emenda foi redigido por assessores do Banco Master e entregue ao senador para apresentação.', fontes: ['em1', 'em2'] },
+    { id: 's12', from: 'frias', to: 'desvio', tipo: 'suspeita', label: 'Liderança (suspeita)',
+      texto: 'A PF atribui ao deputado papel de liderança no suposto esquema e apura R$ 2 milhões em emendas de sua autoria destinadas ao Instituto Conhecer Brasil.', fontes: ['frias1', 'mk2'] },
+    { id: 's13', from: 'desvio', to: 'darkhorse', tipo: 'suspeita', label: 'Recursos (suspeita)',
+      texto: 'Suspeita de desvio de recursos de emendas, por meio de entidades ligadas à produtora (ICB e ANC), para a GoUp Entertainment, responsável pelo filme.', fontes: ['mk1'] }
+  ];
+
+  var container = document.getElementById('graph');
+  if (typeof vis === 'undefined') {
+    container.innerHTML = '<p class="err">Não foi possível carregar a biblioteca vis-network. Verifique a conexão com a internet e recarregue a página.</p>';
+    return;
+  }
+
+  var NODE_BY_ID = {}, EDGE_BY_ID = {};
+  NODES.forEach(function (n) { NODE_BY_ID[n.id] = n; });
+  EDGES.forEach(function (e) { EDGE_BY_ID[e.id] = e; });
+  var NODE_IDS = NODES.map(function (n) { return n.id; });
+
+  function nome(id) { var n = NODE_BY_ID[id]; return n.nome || n.label; }
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function swatch(c) {
+    var s = el('span', 'sw');
+    s.style.background = c.bg; s.style.borderColor = c.border;
+    return s;
+  }
+  function lineIcon(tipo) {
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('width', '26'); svg.setAttribute('height', '10'); svg.setAttribute('viewBox', '0 0 26 10');
+    svg.setAttribute('aria-hidden', 'true');
+    var ln = document.createElementNS(ns, 'line');
+    ln.setAttribute('x1', '1'); ln.setAttribute('y1', '5'); ln.setAttribute('x2', '25'); ln.setAttribute('y2', '5');
+    ln.setAttribute('stroke', tipo === 'suspeita' ? COR.suspeita : COR.formal); ln.setAttribute('stroke-width', '2');
+    if (tipo === 'suspeita') ln.setAttribute('stroke-dasharray', '4 3');
+    svg.appendChild(ln);
+    return svg;
+  }
+  function tipoNome(tipo) { return tipo === 'suspeita' ? 'Suspeita em apuração' : 'Registro formal nos autos'; }
+
+  // Tooltips (propriedade title do vis-network, como elemento DOM)
+  function nodeTip(n) {
+    var c = CAT[n.cat], w = el('div');
+    var k = el('div', 'tt-k'); k.append(swatch(c), document.createTextNode(c.nome)); w.append(k);
+    w.append(el('div', 'tt-t', n.nome || n.label));
+    if (n.papel) w.append(el('div', 'tt-r', n.papel));
+    if (n.status) w.append(el('div', 'badge', n.status));
+    w.append(el('p', 'tt-p', n.texto));
+    w.append(el('div', 'tt-h', 'Clique para isolar as conexões e ver as fontes.'));
+    return w;
+  }
+  function edgeTip(e) {
+    var w = el('div');
+    w.append(el('div', 'tt-k ' + (e.tipo === 'suspeita' ? 'k-s' : 'k-f'), tipoNome(e.tipo)));
+    w.append(el('div', 'tt-t', nome(e.from) + ' → ' + nome(e.to)));
+    w.append(el('div', 'tt-r', e.label));
+    w.append(el('p', 'tt-p', e.texto));
+    return w;
+  }
+
+  // Estilos de nós
+  function fontFor(n, c) {
+    if (c.shape === 'box' || c.shape === 'ellipse') {
+      return { multi: 'html', face: FONT, size: 12, color: c.ink2, strokeWidth: 0,
+               bold: { face: FONT, size: 15, color: c.ink, mod: 'bold' } };
+    }
+    return { multi: 'html', face: FONT, size: 12.5, color: '#D9D9DE', strokeWidth: 5, strokeColor: '#121212',
+             bold: { face: FONT, size: n.id === 'master' ? 18 : 15, color: '#FFFFFF', mod: 'bold' } };
+  }
+  function dimFont(f) {
+    var d = JSON.parse(JSON.stringify(f)), dim = 'rgba(190,190,200,0.16)';
+    d.color = dim; d.bold.color = dim; d.strokeWidth = 0;
+    return d;
+  }
+  function visNode(n) {
+    var c = CAT[n.cat];
+    n._font = fontFor(n, c);
+    n._fontDim = dimFont(n._font);
+    var o = {
+      id: n.id, shape: c.shape, x: n.x, y: n.y, mass: n.mass || c.mass,
+      label: (c.shape === 'box' ? '<b>' + n.label + '</b>\n' + n.papel : '<b>' + n.label + '</b>'),
+      title: nodeTip(n),
+      color: { background: c.bg, border: c.border,
+               highlight: { background: c.hi, border: '#FFFFFF' }, hover: { background: c.hi, border: '#FFFFFF' } },
+      borderWidth: 2, borderWidthSelected: 3,
+      font: n._font, opacity: 1,
+      shadow: { enabled: true, color: c.glow, size: c.glowSize, x: 0, y: 0 }
+    };
+    if (c.shape === 'hexagon' || c.shape === 'diamond') o.size = n.size || c.size;
+    else { o.margin = { top: 9, bottom: 9, left: 12, right: 12 }; o.shapeProperties = { borderRadius: 7 }; }
+    return o;
+  }
+
+  // Estilos de arestas
+  var showLabels = true;
+  function edgeLook(e, on) {
+    var lbl = on && showLabels;
+    return {
+      color: { color: e.tipo === 'suspeita' ? COR.suspeita : COR.formal, highlight: '#FFFFFF', hover: '#FFFFFF',
+               inherit: false, opacity: on ? 0.95 : 0.07 },
+      font: { face: FONT, size: 12, color: lbl ? COR.label : 'rgba(0,0,0,0)', strokeWidth: 0,
+              background: lbl ? COR.labelBg : 'rgba(0,0,0,0)', align: 'horizontal' }
+    };
+  }
+  function visEdge(e) {
+    var o = {
+      id: e.id, from: e.from, to: e.to, label: e.label, title: edgeTip(e),
+      arrows: { to: { enabled: true, scaleFactor: 0.55 } },
+      dashes: e.tipo === 'suspeita' ? [7, 6] : false,
+      length: Math.max(150, Math.round(Math.hypot(NODE_BY_ID[e.to].x - NODE_BY_ID[e.from].x, NODE_BY_ID[e.to].y - NODE_BY_ID[e.from].y))),
+      width: 1.6, hoverWidth: 1, selectionWidth: 1.4,
+      smooth: false
+    };
+    var look = edgeLook(e, true);
+    o.color = look.color; o.font = look.font;
+    return o;
+  }
+
+
+  // Âncoras invisíveis por polo (fora da física: não repelem nem se movem). As molas até elas ficam em
+  // repouso no layout-base e fixam a orientação: financeiro no centro, controle no topo, PT à esquerda,
+  // Centrão embaixo e PL à direita. Esquemas ficam livres entre os atores a que se ligam.
+  var anchors = [], anchorEdges = [];
+  NODES.forEach(function (n) {
+    if (!n.polo) return;
+    var a = anchors.filter(function (x) { return x.id === '__' + n.polo; })[0];
+    if (!a) { a = { id: '__' + n.polo, sx: 0, sy: 0, k: 0, hidden: true, physics: false, shape: 'dot', size: 1 }; anchors.push(a); }
+    a.sx += n.x; a.sy += n.y; a.k += 1;
+  });
+  anchors.forEach(function (a) { a.x = a.sx / a.k; a.y = a.sy / a.k; delete a.sx; delete a.sy; delete a.k; });
+  NODES.forEach(function (n) {
+    if (!n.polo) return;
+    var a = anchors.filter(function (x) { return x.id === '__' + n.polo; })[0];
+    anchorEdges.push({ id: '__e_' + n.id, from: n.id, to: a.id, hidden: true, physics: true, smooth: false,
+                       length: Math.round(Math.hypot(n.x - a.x, n.y - a.y)) });
+  });
+
+  var nodesDS = new vis.DataSet(NODES.map(visNode).concat(anchors));
+  var edgesDS = new vis.DataSet(EDGES.map(visEdge).concat(anchorEdges));
+
+  var network = new vis.Network(container, { nodes: nodesDS, edges: edgesDS }, {
+    autoResize: true,
+    layout: { improvedLayout: false, randomSeed: 11 },
+    physics: {
+      enabled: true,
+      solver: 'barnesHut',
+      barnesHut: {
+        theta: 0.5,
+        gravitationalConstant: -4000,
+        centralGravity: 0.1,
+        springLength: 220,
+        springConstant: 0.04,
+        damping: 0.35,
+        avoidOverlap: 0
+      },
+      maxVelocity: 40,
+      minVelocity: 0.5,
+      timestep: 0.45,
+      stabilization: { enabled: true, iterations: 1200, updateInterval: 100, fit: false }
+    },
+    interaction: {
+      hover: true, tooltipDelay: 120, dragNodes: true, dragView: true, zoomView: true,
+      selectConnectedEdges: false, hoverConnectedEdges: true, multiselect: false,
+      keyboard: { enabled: true, bindToWindow: false }
+    }
+  });
+
+  // Enquadramento que desconta os painéis fixos
+  var hdr = document.getElementById('hdr'), legend = document.getElementById('legend'), top = document.getElementById('top');
+  function isNarrow() { return window.innerWidth <= 760; }
+  function fitView(animate) {
+    var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    NODE_IDS.forEach(function (id) {
+      var b = network.getBoundingBox(id);
+      if (!b) return;
+      minX = Math.min(minX, b.left); maxX = Math.max(maxX, b.right);
+      minY = Math.min(minY, b.top); maxY = Math.max(maxY, b.bottom);
+    });
+    if (!isFinite(minX)) return;
+    var W = container.clientWidth, H = container.clientHeight, ins;
+    if (isNarrow()) {
+      ins = { l: 16, r: 16, t: top.getBoundingClientRect().bottom + 8, b: H - legend.getBoundingClientRect().top + 8 };
+    } else {
+      ins = { l: hdr.getBoundingClientRect().right + 16, r: 24, t: 64, b: 24 };
+    }
+    var aw = Math.max(120, W - ins.l - ins.r), ah = Math.max(120, H - ins.t - ins.b);
+    var scale = Math.min(aw / (maxX - minX), ah / (maxY - minY), 1.3);
+    var cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+    // Em telas estreitas o grafo inteiro ficaria ilegível: mantém zoom mínimo e centraliza no núcleo (arrastar para os polos).
+    if (isNarrow() && scale < 0.45) { scale = 0.45; cx = network.getPositions(['master']).master.x; }
+    var sx = ins.l + aw / 2, sy = ins.t + ah / 2;
+    network.moveTo({
+      position: { x: cx - (sx - W / 2) / scale, y: cy - (sy - H / 2) / scale },
+      scale: scale,
+      animation: animate ? { duration: 450, easingFunction: 'easeInOutQuad' } : false
+    });
+  }
+
+  // Seleção: isola a vizinhança e abre o painel de detalhes
+  var selected = null;
+  var info = document.getElementById('info'), infoBody = document.getElementById('info-body');
+
+  function restyle() {
+    var nb = null, eon = null;
+    if (selected && selected.type === 'node') {
+      nb = {}; eon = {}; nb[selected.id] = true;
+      EDGES.forEach(function (e) {
+        if (e.from === selected.id || e.to === selected.id) { nb[e.from] = true; nb[e.to] = true; eon[e.id] = true; }
+      });
+    } else if (selected && selected.type === 'edge') {
+      var se = EDGE_BY_ID[selected.id];
+      nb = {}; eon = {}; nb[se.from] = true; nb[se.to] = true; eon[se.id] = true;
+    }
+    nodesDS.update(NODES.map(function (n) {
+      var on = !nb || nb[n.id];
+      return { id: n.id, opacity: on ? 1 : 0.14, font: on ? n._font : n._fontDim };
+    }));
+    edgesDS.update(EDGES.map(function (e) {
+      var look = edgeLook(e, !eon || !!eon[e.id]);
+      return { id: e.id, color: look.color, font: look.font };
+    }));
+  }
+
+  function appendSources(box, keys) {
+    if (!keys || !keys.length) return;
+    box.append(el('h3', null, 'Fontes consultadas'));
+    var ul = el('ul', 'src');
+    keys.forEach(function (k) {
+      var f = FONTES[k]; if (!f) return;
+      var li = el('li'), a = el('a', null, f.v + ' — ' + f.t);
+      a.href = f.u; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      li.append(a); ul.append(li);
+    });
+    box.append(ul);
+  }
+
+  function renderNodeInfo(id) {
+    var n = NODE_BY_ID[id], c = CAT[n.cat];
+    infoBody.replaceChildren();
+    var k = el('div', 'tt-k'); k.append(swatch(c), document.createTextNode(c.nome)); infoBody.append(k);
+    infoBody.append(el('h2', null, n.nome || n.label));
+    if (n.papel) infoBody.append(el('div', 'role', n.papel));
+    if (n.status) infoBody.append(el('div', 'badge', n.status));
+    infoBody.append(el('p', 'desc', n.texto));
+    var conns = EDGES.filter(function (e) { return e.from === id || e.to === id; });
+    infoBody.append(el('h3', null, 'Conexões (' + conns.length + ')'));
+    var ul = el('ul', 'conn');
+    conns.forEach(function (e) {
+      var other = e.from === id ? e.to : e.from;
+      var li = el('li'), b = el('button');
+      b.type = 'button';
+      b.setAttribute('aria-label', e.label + ': ' + nome(e.from) + ' para ' + nome(e.to) + '. Selecionar ' + nome(other));
+      var l = el('div', 'l'); l.append(lineIcon(e.tipo), el('span', null, e.label));
+      b.append(l, el('div', 'w', nome(e.from) + ' → ' + nome(e.to)), el('div', 'd', e.texto));
+      b.addEventListener('click', function () { select({ type: 'node', id: other }); });
+      li.append(b); ul.append(li);
+    });
+    infoBody.append(ul);
+    appendSources(infoBody, n.fontes);
+    infoBody.append(el('p', 'foot', 'Representação sem juízo de culpa: aplica-se a presunção de inocência.'));
+  }
+
+  function renderEdgeInfo(id) {
+    var e = EDGE_BY_ID[id];
+    infoBody.replaceChildren();
+    var k = el('div', 'tt-k ' + (e.tipo === 'suspeita' ? 'k-s' : 'k-f'));
+    k.append(lineIcon(e.tipo), document.createTextNode(tipoNome(e.tipo)));
+    infoBody.append(k);
+    infoBody.append(el('h2', null, e.label));
+    infoBody.append(el('div', 'role', nome(e.from) + ' → ' + nome(e.to)));
+    infoBody.append(el('p', 'desc', e.texto));
+    var ends = el('div', 'ends');
+    [e.from, e.to].forEach(function (nid) {
+      var b = el('button', null, nome(nid)); b.type = 'button';
+      b.addEventListener('click', function () { select({ type: 'node', id: nid }); });
+      ends.append(b);
+    });
+    infoBody.append(ends);
+    appendSources(infoBody, e.fontes);
+    infoBody.append(el('p', 'foot', 'Representação sem juízo de culpa: aplica-se a presunção de inocência.'));
+  }
+
+  function select(s) {
+    selected = s;
+    restyle();
+    if (!s) { network.unselectAll(); info.hidden = true; return; }
+    if (s.type === 'node') { network.selectNodes([s.id], false); renderNodeInfo(s.id); }
+    else { network.setSelection({ nodes: [], edges: [s.id] }, { unselectAll: true, highlightEdges: false }); renderEdgeInfo(s.id); }
+    info.hidden = false;
+    info.scrollTop = 0;
+  }
+
+  network.on('click', function (p) {
+    var n = p.nodes.filter(function (id) { return NODE_BY_ID[id]; });
+    var e = p.edges.filter(function (id) { return EDGE_BY_ID[id]; });
+    if (n.length) select({ type: 'node', id: n[0] });
+    else if (e.length) select({ type: 'edge', id: e[0] });
+    else select(null);
+  });
+  network.on('hoverNode', function () { container.style.cursor = 'pointer'; });
+  network.on('blurNode', function () { container.style.cursor = ''; });
+  network.on('hoverEdge', function () { container.style.cursor = 'pointer'; });
+  network.on('blurEdge', function () { container.style.cursor = ''; });
+  var userMoved = false;
+  network.on('dragStart', function () { userMoved = true; });
+  network.on('zoom', function () { userMoved = true; });
+  network.once('stabilizationIterationsDone', function () { fitView(false); });
+  network.on('stabilized', function () { if (!userMoved) fitView(true); });
+
+  document.getElementById('info-close').addEventListener('click', function () { select(null); });
+  window.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape' && !document.querySelector('dialog[open]')) select(null);
+  });
+  var rt;
+  window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { fitView(false); }, 150); });
+
+  // Barra de ferramentas
+  var physicsOn = true;
+  var btnPhys = document.getElementById('btn-phys'), btnLabels = document.getElementById('btn-labels');
+  document.getElementById('btn-fit').addEventListener('click', function () { userMoved = false; fitView(true); });
+  btnPhys.addEventListener('click', function () {
+    physicsOn = !physicsOn;
+    network.setOptions({ physics: { enabled: physicsOn } });
+    btnPhys.setAttribute('aria-pressed', String(physicsOn));
+    btnPhys.textContent = 'Física: ' + (physicsOn ? 'ligada' : 'desligada');
+  });
+  btnLabels.addEventListener('click', function () {
+    showLabels = !showLabels;
+    restyle();
+    btnLabels.setAttribute('aria-pressed', String(showLabels));
+    btnLabels.textContent = 'Rótulos: ' + (showLabels ? 'visíveis' : 'ocultos');
+  });
+  var dlgTable = document.getElementById('dlg-table'), dlgMethod = document.getElementById('dlg-method');
+  document.getElementById('btn-table').addEventListener('click', function () { dlgTable.showModal(); });
+  document.getElementById('btn-method').addEventListener('click', function () { dlgMethod.showModal(); });
+
+  // Legenda de entes (forma + cor + contagem)
+  var SHAPES = {
+    hexagon: function (c) { return '<polygon points="22.5,12 17.25,21.1 6.75,21.1 1.5,12 6.75,2.9 17.25,2.9" fill="' + c.bg + '" stroke="' + c.border + '" stroke-width="1.6"/>'; },
+    ellipse: function (c) { return '<ellipse cx="12" cy="12" rx="10.5" ry="7" fill="' + c.bg + '" stroke="' + c.border + '" stroke-width="1.6"/>'; },
+    diamond: function (c) { return '<polygon points="12,1.5 22.5,12 12,22.5 1.5,12" fill="' + c.bg + '" stroke="' + c.border + '" stroke-width="1.6"/>'; },
+    box:     function (c) { return '<rect x="1.5" y="5.5" width="21" height="13" rx="3" fill="' + c.bg + '" stroke="' + c.border + '" stroke-width="1.6"/>'; }
+  };
+  var lgNodes = document.getElementById('lg-nodes');
+  Object.keys(CAT).forEach(function (key) {
+    var c = CAT[key];
+    var count = NODES.filter(function (n) { return n.cat === key; }).length;
+    var li = el('li');
+    li.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">' + SHAPES[c.shape](c) + '</svg>';
+    var t = el('span'); t.append(el('b', null, c.nome), document.createTextNode(' (' + count + ')'));
+    li.append(t);
+    lgNodes.append(li);
+  });
+  if (isNarrow()) document.getElementById('legend-d').open = false;
+
+  // Contadores
+  var nFormal = EDGES.filter(function (e) { return e.tipo === 'formal'; }).length;
+  var stats = document.getElementById('stats');
+  [[NODES.length, ' entes · '], [EDGES.length, ' conexões · '], [nFormal, ' registros formais · '],
+   [EDGES.length - nFormal, ' suspeitas em apuração']].forEach(function (p) {
+    stats.append(el('b', null, String(p[0])), document.createTextNode(p[1]));
+  });
+
+  // Lista de conexões (alternativa acessível ao grafo)
+  var tbody = document.querySelector('#tbl tbody');
+  function nodeCell(id) {
+    var td = el('td'), b = el('button', null, nome(id)); b.type = 'button';
+    b.addEventListener('click', function () { dlgTable.close(); select({ type: 'node', id: id }); });
+    td.append(b);
+    return td;
+  }
+  EDGES.forEach(function (e) {
+    var tr = el('tr'), tdT = el('td'), tag = el('span', 'tag');
+    tag.append(lineIcon(e.tipo), document.createTextNode(e.tipo === 'suspeita' ? 'Suspeita' : 'Registro formal'));
+    tdT.append(tag);
+    tr.append(nodeCell(e.from), el('td', null, e.label), nodeCell(e.to), tdT, el('td', 'muted', e.texto));
+    tbody.append(tr);
+  });
+
+  // Lista geral de fontes
+  var mSrc = document.getElementById('m-src');
+  Object.keys(FONTES).forEach(function (k) {
+    var f = FONTES[k], li = el('li'), a = el('a', null, f.v + ' — ' + f.t);
+    a.href = f.u; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    li.append(a); mSrc.append(li);
+  });
+})();
+</script>
+</body>
+</html>
